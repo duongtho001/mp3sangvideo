@@ -347,28 +347,47 @@ interface AnalysisPanelProps {
     onPlayPrompt: (prompt: AudioPrompt) => void;
     fileName: string;
     isPlaybackEnabled: boolean;
+    voiceGender: string | null;
 }
 
-const AnalysisPanel: FC<AnalysisPanelProps> = ({ prompts, playingPromptId, onPlayPrompt, fileName, isPlaybackEnabled }) => (
-    <div className="w-full space-y-6">
-       <div className="text-center p-4 bg-gray-800 rounded-lg sticky top-0 z-10">
-         <h2 className="text-xl font-bold">Phân tích tệp <span className="text-cyan-400">{fileName}</span></h2>
-         <p className="text-gray-400">Tìm thấy {prompts.length} phân đoạn</p>
-         {!isPlaybackEnabled && <p className="text-xs text-yellow-400 mt-2">(Không thể phát lại âm thanh cho phiên đã lưu)</p>}
-       </div>
-       <div className="space-y-3 max-h-[70vh] overflow-y-auto p-1 rounded-md bg-gray-900/50">
-         {prompts.map((prompt) => (
-           <PromptItem
-             key={prompt.id}
-             prompt={prompt}
-             isPlaying={playingPromptId === prompt.id}
-             onPlay={() => onPlayPrompt(prompt)}
-             isPlaybackEnabled={isPlaybackEnabled}
-           />
-         ))}
-       </div>
-    </div>
-);
+const AnalysisPanel: FC<AnalysisPanelProps> = ({ prompts, playingPromptId, onPlayPrompt, fileName, isPlaybackEnabled, voiceGender }) => {
+    const displayGender = (gender: string | null) => {
+        if (!gender) return null;
+        switch (gender.toLowerCase()) {
+            case 'male': return 'Nam';
+            case 'female': return 'Nữ';
+            case 'mixed': return 'Nhiều giọng';
+            default: return null;
+        }
+    };
+    
+    const formattedGender = displayGender(voiceGender);
+
+    return (
+        <div className="w-full space-y-6">
+           <div className="text-center p-4 bg-gray-800 rounded-lg sticky top-0 z-10">
+             <h2 className="text-xl font-bold">Phân tích tệp <span className="text-cyan-400">{fileName}</span></h2>
+             <p className="text-gray-400">Tìm thấy {prompts.length} phân đoạn</p>
+             {formattedGender && (
+                <p className="text-sm text-gray-400 mt-1">Giọng nói được phát hiện: <span className="font-semibold text-cyan-400">{formattedGender}</span></p>
+             )}
+             {!isPlaybackEnabled && <p className="text-xs text-yellow-400 mt-2">(Không thể phát lại âm thanh cho phiên đã lưu)</p>}
+           </div>
+           <div className="space-y-3 max-h-[70vh] overflow-y-auto p-1 rounded-md bg-gray-900/50">
+             {prompts.map((prompt) => (
+               <PromptItem
+                 key={prompt.id}
+                 prompt={prompt}
+                 isPlaying={playingPromptId === prompt.id}
+                 onPlay={() => onPlayPrompt(prompt)}
+                 isPlaybackEnabled={isPlaybackEnabled}
+               />
+             ))}
+           </div>
+        </div>
+    );
+};
+
 
 interface StoryboardPanelProps {
   isPlaybackEnabled: boolean;
@@ -384,13 +403,15 @@ interface StoryboardPanelProps {
   storyboard: Storyboard | null;
   onPromptTextChange: (promptIndex: number, newText: string) => void;
   fileName: string;
+  characterNationality: string;
+  onCharacterNationalityChange: (value: string) => void;
 }
 
 const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
   const { 
     isPlaybackEnabled, onTranscribeAudio, isTranscribing, transcriptionError, scriptText, 
     onScriptTextChange, onTxtFileUpload, onGenerateStoryboard, isGenerating, generationError, 
-    storyboard, onPromptTextChange, fileName
+    storyboard, onPromptTextChange, fileName, characterNationality, onCharacterNationalityChange
   } = props;
   
   const txtInputRef = useRef<HTMLInputElement>(null);
@@ -481,6 +502,28 @@ const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
                       className="w-full mt-4 h-40 p-4 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-colors"
                       disabled={isGenerating}
                   />
+                  <div className="mt-4">
+                      <label htmlFor="nationality-select" className="block text-sm font-medium text-gray-400 mb-2">
+                          Quốc tịch Nhân vật (Tùy chọn)
+                      </label>
+                      <select
+                          id="nationality-select"
+                          value={characterNationality}
+                          onChange={(e) => onCharacterNationalityChange(e.target.value)}
+                          disabled={isGenerating}
+                          className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-colors"
+                      >
+                          <option value="default">Mặc định (Không xác định)</option>
+                          <option value="Vietnamese">Việt Nam</option>
+                          <option value="Japanese">Nhật Bản</option>
+                          <option value="Korean">Hàn Quốc</option>
+                          <option value="Chinese">Trung Quốc</option>
+                          <option value="Thai">Thái Lan</option>
+                          <option value="American">Mỹ (American)</option>
+                          <option value="British">Anh (British)</option>
+                          <option value="French">Pháp (French)</option>
+                      </select>
+                  </div>
                   <button
                       onClick={onGenerateStoryboard}
                       disabled={isGenerating || !scriptText.trim()}
@@ -637,6 +680,8 @@ const App: FC = () => {
   const [storyboard, setStoryboard] = useState<Storyboard | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [voiceGender, setVoiceGender] = useState<string | null>(null);
+  const [characterNationality, setCharacterNationality] = useState<string>('default');
   
   // History State
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -711,9 +756,66 @@ const App: FC = () => {
     setGenerationError(null);
     setIsLoading(false);
     setLoadingMessage('');
+    setVoiceGender(null);
+    setCharacterNationality('default');
   }, []);
 
-  const handleFileUpload = useCallback((selectedFile: File) => {
+  const analyzeVoiceGender = async (audioFile: File): Promise<string | null> => {
+    if (apiKeys.length === 0) {
+        // Don't open modal here, let the main process handle it.
+        console.warn("No API keys for voice analysis.");
+        return null;
+    }
+
+    let attemptedKeys = 0;
+    let localApiKeyIndex = currentApiKeyIndex;
+
+    while (attemptedKeys < apiKeys.length) {
+        const keyToTry = apiKeys[localApiKeyIndex];
+        attemptedKeys++;
+
+        try {
+            const ai = new GoogleGenAI({ apiKey: keyToTry });
+            const base64Data = await fileToBase64(audioFile);
+
+            const audioPart = { inlineData: { mimeType: audioFile.type, data: base64Data } };
+            const textPart = { text: "Analyze the voice(s) in this audio file. Identify the gender of the primary speaker or speakers. Respond with only one word from the following options: 'Male', 'Female', 'Mixed', 'Unknown'." };
+            
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-pro',
+                contents: { parts: [audioPart, textPart] },
+            });
+            
+            const result = response.text.trim();
+            const validResults = ['Male', 'Female', 'Mixed', 'Unknown'];
+            const gender = validResults.find(r => result.toLowerCase().includes(r.toLowerCase())) || 'Unknown';
+            
+            setVoiceGender(gender);
+            setCurrentApiKeyIndex(localApiKeyIndex);
+            localStorage.setItem('geminiApiKeyIndex', JSON.stringify(localApiKeyIndex));
+            return gender;
+
+        } catch (err) {
+            console.error(`Gender analysis with API Key ${localApiKeyIndex + 1} failed:`, err);
+            const isQuotaError = err instanceof Error && (err.message.includes('429') || err.message.toLowerCase().includes('quota') || err.message.toLowerCase().includes('resource has been exhausted'));
+            
+            if (isQuotaError) {
+                localApiKeyIndex = (localApiKeyIndex + 1) % apiKeys.length;
+            } else {
+                console.error("An unexpected error occurred during voice analysis.");
+                setVoiceGender('Unknown');
+                return 'Unknown';
+            }
+        }
+    }
+    
+    console.error("All API keys failed for voice analysis.");
+    setVoiceGender('Unknown');
+    return 'Unknown';
+};
+
+
+  const handleFileUpload = useCallback(async (selectedFile: File) => {
     if (!selectedFile.type.startsWith('audio/')) {
       setError('Loại tệp không hợp lệ. Vui lòng tải lên tệp âm thanh được hỗ trợ.');
       return;
@@ -725,14 +827,12 @@ const App: FC = () => {
     resetState();
     setFile(selectedFile);
     setIsLoading(true);
-
-    const reader = new FileReader();
     setLoadingMessage('Đang đọc tệp...');
-    reader.onload = async (e) => {
-      try {
-        const arrayBuffer = e.target?.result as ArrayBuffer;
+
+    try {
+        const arrayBuffer = await selectedFile.arrayBuffer();
         if (!audioContextRef.current) {
-          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
         }
         setLoadingMessage('Đang giải mã dữ liệu âm thanh...');
         const decodedBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
@@ -741,35 +841,29 @@ const App: FC = () => {
         setLoadingMessage('Đang phân đoạn âm thanh...');
         const totalDuration = decodedBuffer.duration;
         const numChunks = Math.ceil(totalDuration / CHUNK_DURATION);
-        const generatedPrompts: AudioPrompt[] = [];
-
-        for (let i = 0; i < numChunks; i++) {
-          const startTime = i * CHUNK_DURATION;
-          const endTime = Math.min(startTime + CHUNK_DURATION, totalDuration);
-          generatedPrompts.push({
-            id: i,
-            startTime,
-            endTime,
-            duration: endTime - startTime,
-          });
-        }
+        const generatedPrompts: AudioPrompt[] = Array.from({ length: numChunks }, (_, i) => {
+            const startTime = i * CHUNK_DURATION;
+            const endTime = Math.min(startTime + CHUNK_DURATION, totalDuration);
+            return {
+                id: i,
+                startTime,
+                endTime,
+                duration: endTime - startTime,
+            };
+        });
         setPrompts(generatedPrompts);
-      } catch (err) {
+        
+        setLoadingMessage('Đang phân tích giọng nói...');
+        await analyzeVoiceGender(selectedFile);
+
+    } catch (err) {
         setError('Không thể xử lý tệp âm thanh. Tệp có thể bị hỏng hoặc có định dạng không được hỗ trợ.');
         console.error(err);
-      } finally {
+    } finally {
         setIsLoading(false);
         setLoadingMessage('');
-      }
-    };
-    reader.onerror = () => {
-        setError('Không thể đọc tệp.');
-        setIsLoading(false);
-        setLoadingMessage('');
-    };
-
-    reader.readAsArrayBuffer(selectedFile);
-  }, [resetState]);
+    }
+  }, [resetState, apiKeys, currentApiKeyIndex]);
 
   const handlePlayPrompt = useCallback((prompt: AudioPrompt) => {
     if (!audioBuffer || !audioContextRef.current) return;
@@ -920,12 +1014,42 @@ const App: FC = () => {
                 required: ["storyboard", "characterDescriptions", "settingDescription"]
             };
             
+            const promptRequirements: string[] = [
+                "**Detailed Descriptions:** First, provide detailed descriptions for the main characters and the primary setting. For characters, describe each on a new line. This is crucial for maintaining visual consistency across all generated video clips.",
+            ];
+
+            if (characterNationality && characterNationality !== 'default') {
+                promptRequirements.push(`**Character Nationality:** The characters MUST be described as ${characterNationality}. Ensure their appearance, clothing, and context are consistent with people from that nationality. This is a strict requirement.`);
+            }
+
+            if (voiceGender && voiceGender.toLowerCase() !== 'unknown') {
+                let description = '';
+                switch (voiceGender.toLowerCase()) {
+                    case 'male':
+                        description = 'The primary speaker is male. Reflect this in the character descriptions (e.g., "a male news anchor," "a man in his 40s").';
+                        break;
+                    case 'female':
+                        description = 'The primary speaker is female. Reflect this in the character descriptions (e.g., "a female reporter," "a woman in her 30s").';
+                        break;
+                    case 'mixed':
+                        description = 'There are multiple speakers of different genders. Create distinct character descriptions, noting their likely gender based on the dialogue.';
+                        break;
+                }
+                if(description) {
+                    promptRequirements.push(`**Voice Profile:** ${description}`);
+                }
+            }
+
+            promptRequirements.push(`**Scene Prompts:** Then, generate a list of exactly ${prompts.length} distinct video prompts, one for each audio segment.`);
+            promptRequirements.push(`**Cinematic Language:** Each prompt must be a richly descriptive paragraph. Include details on camera angles (e.g., "wide shot," "close-up"), character actions, emotions, lighting, and environment. Each prompt should be a single paragraph with no internal line breaks.`);
+            promptRequirements.push(`**Consistency:** Ensure the character and setting descriptions are consistently applied across all storyboard prompts.`);
+            
+            const numberedRequirements = promptRequirements.map((req, index) => `${index + 1}. ${req}`).join('\n\n');
+
             const userPrompt = `You are a creative director for a short film. The film will be generated using a text-to-video AI model called Veo. The audio for this film has been split into ${prompts.length} segments, each approximately 8 seconds long. Based on the following script/summary, create a coherent video storyboard.
             **Key Requirements:**
-            1.  **Detailed Descriptions:** First, provide detailed descriptions for the main characters and the primary setting. For characters, describe each on a new line. This is crucial for maintaining visual consistency across all generated video clips.
-            2.  **Scene Prompts:** Then, generate a list of exactly ${prompts.length} distinct video prompts, one for each audio segment.
-            3.  **Cinematic Language:** Each prompt must be a richly descriptive paragraph. Include details on camera angles (e.g., "wide shot," "close-up"), character actions, emotions, lighting, and environment. Each prompt should be a single paragraph with no internal line breaks.
-            4.  **Consistency:** Ensure the character and setting descriptions are consistently applied across all storyboard prompts.
+            ${numberedRequirements}
+            
             **User-Provided Audio Script/Summary:**
             ---
             ${scriptText}
@@ -941,7 +1065,7 @@ const App: FC = () => {
             const parsedStoryboard = JSON.parse(response.text) as Storyboard;
             setStoryboard(parsedStoryboard);
 
-            const newEntry: HistoryEntry = { id: `${Date.now()}-${file.name}`, timestamp: Date.now(), fileName: file.name, prompts, scriptText, storyboard: parsedStoryboard };
+            const newEntry: HistoryEntry = { id: `${Date.now()}-${file.name}`, timestamp: Date.now(), fileName: file.name, prompts, scriptText, storyboard: parsedStoryboard, voiceGender, characterNationality };
             saveHistory([newEntry, ...history]);
             
             setCurrentApiKeyIndex(localApiKeyIndex);
@@ -975,6 +1099,8 @@ const App: FC = () => {
         setPrompts(entry.prompts);
         setScriptText(entry.scriptText);
         setStoryboard(entry.storyboard);
+        setVoiceGender(entry.voiceGender || null);
+        setCharacterNationality(entry.characterNationality || 'default');
         setAudioBuffer(null); // IMPORTANT: No audio buffer for history items
         setIsHistoryPanelOpen(false);
     }
@@ -1013,6 +1139,7 @@ const App: FC = () => {
                 onPlayPrompt={handlePlayPrompt}
                 fileName={file.name}
                 isPlaybackEnabled={!!audioBuffer}
+                voiceGender={voiceGender}
             />
             <StoryboardPanel 
                 fileName={file.name}
@@ -1028,6 +1155,8 @@ const App: FC = () => {
                 generationError={generationError}
                 storyboard={storyboard}
                 onPromptTextChange={handlePromptTextChange}
+                characterNationality={characterNationality}
+                onCharacterNationalityChange={setCharacterNationality}
             />
         </div>
       );

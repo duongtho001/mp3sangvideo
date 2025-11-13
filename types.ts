@@ -24,4 +24,6 @@ export interface HistoryEntry {
   prompts: AudioPrompt[];
   scriptText: string;
   storyboard: Storyboard;
+  voiceGender?: string | null;
+  characterNationality?: string;
 }
