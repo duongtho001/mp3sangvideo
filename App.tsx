@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback, FC, useEffect } from 'react';
 import { AudioPrompt, Storyboard, StoryboardPrompt, HistoryEntry } from './types';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -522,6 +521,8 @@ const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
                           <option value="American">Mỹ (American)</option>
                           <option value="British">Anh (British)</option>
                           <option value="French">Pháp (French)</option>
+                          <option value="Portuguese">Bồ Đào Nha (Portuguese)</option>
+                          <option value="Spanish">Tây Ban Nha (Spanish)</option>
                       </select>
                   </div>
                   <button
