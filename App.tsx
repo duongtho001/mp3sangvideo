@@ -404,13 +404,16 @@ interface StoryboardPanelProps {
   fileName: string;
   characterNationality: string;
   onCharacterNationalityChange: (value: string) => void;
+  generationStyle: 'direct' | 'narrative';
+  onGenerationStyleChange: (value: 'direct' | 'narrative') => void;
 }
 
 const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
   const { 
     isPlaybackEnabled, onTranscribeAudio, isTranscribing, transcriptionError, scriptText, 
     onScriptTextChange, onTxtFileUpload, onGenerateStoryboard, isGenerating, generationError, 
-    storyboard, onPromptTextChange, fileName, characterNationality, onCharacterNationalityChange
+    storyboard, onPromptTextChange, fileName, characterNationality, onCharacterNationalityChange,
+    generationStyle, onGenerationStyleChange
   } = props;
   
   const txtInputRef = useRef<HTMLInputElement>(null);
@@ -501,30 +504,52 @@ const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
                       className="w-full mt-4 h-40 p-4 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-colors"
                       disabled={isGenerating}
                   />
-                  <div className="mt-4">
-                      <label htmlFor="nationality-select" className="block text-sm font-medium text-gray-400 mb-2">
-                          Quốc tịch Nhân vật (Tùy chọn)
-                      </label>
-                      <select
-                          id="nationality-select"
-                          value={characterNationality}
-                          onChange={(e) => onCharacterNationalityChange(e.target.value)}
-                          disabled={isGenerating}
-                          className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-colors"
-                      >
-                          <option value="default">Mặc định (Không xác định)</option>
-                          <option value="Vietnamese">Việt Nam</option>
-                          <option value="Japanese">Nhật Bản</option>
-                          <option value="Korean">Hàn Quốc</option>
-                          <option value="Chinese">Trung Quốc</option>
-                          <option value="Thai">Thái Lan</option>
-                          <option value="American">Mỹ (American)</option>
-                          <option value="British">Anh (British)</option>
-                          <option value="French">Pháp (French)</option>
-                          <option value="Portuguese">Bồ Đào Nha (Portuguese)</option>
-                          <option value="Spanish">Tây Ban Nha (Spanish)</option>
-                      </select>
-                  </div>
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="nationality-select" className="block text-sm font-medium text-gray-400 mb-2">
+                                Quốc tịch Nhân vật (Tùy chọn)
+                            </label>
+                            <select
+                                id="nationality-select"
+                                value={characterNationality}
+                                onChange={(e) => onCharacterNationalityChange(e.target.value)}
+                                disabled={isGenerating}
+                                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-colors"
+                            >
+                                <option value="default">Mặc định (Không xác định)</option>
+                                <option value="Vietnamese">Việt Nam</option>
+                                <option value="Japanese">Nhật Bản</option>
+                                <option value="Korean">Hàn Quốc</option>
+                                <option value="Chinese">Trung Quốc</option>
+                                <option value="Thai">Thái Lan</option>
+                                <option value="American">Mỹ (American)</option>
+                                <option value="British">Anh (British)</option>
+                                <option value="French">Pháp (French)</option>
+                                <option value="Portuguese">Bồ Đào Nha (Portuguese)</option>
+                                <option value="Spanish">Tây Ban Nha (Spanish)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="style-select" className="block text-sm font-medium text-gray-400 mb-2">
+                                Phong cách Kịch bản
+                            </label>
+                            <select
+                                id="style-select"
+                                value={generationStyle}
+                                onChange={(e) => onGenerationStyleChange(e.target.value as 'direct' | 'narrative')}
+                                disabled={isGenerating}
+                                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-colors"
+                            >
+                                <option value="direct">Hành động Trực tiếp</option>
+                                <option value="narrative">Thuyết minh/Minh họa</option>
+                            </select>
+                        </div>
+                    </div>
+                     <div className="mt-2 text-center text-xs text-gray-500 px-2 py-2 bg-gray-900/50 rounded-md">
+                        {generationStyle === 'direct'
+                            ? 'Tạo cảnh nhân vật thực hiện hành động hoặc nói lời thoại trong kịch bản.'
+                            : 'Tạo cảnh quay minh họa (B-roll) cho nội dung được nói, không hiển thị người nói.'}
+                    </div>
                   <button
                       onClick={onGenerateStoryboard}
                       disabled={isGenerating || !scriptText.trim()}
@@ -683,6 +708,7 @@ const App: FC = () => {
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [voiceGender, setVoiceGender] = useState<string | null>(null);
   const [characterNationality, setCharacterNationality] = useState<string>('default');
+  const [generationStyle, setGenerationStyle] = useState<'direct' | 'narrative'>('direct');
   
   // History State
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -696,7 +722,7 @@ const App: FC = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
 
-  const CHUNK_DURATION = 8; // 8 seconds
+  const CHUNK_DURATION = 8; // Ideal chunk duration in seconds
 
   useEffect(() => {
     try {
@@ -759,6 +785,7 @@ const App: FC = () => {
     setLoadingMessage('');
     setVoiceGender(null);
     setCharacterNationality('default');
+    setGenerationStyle('direct');
   }, []);
 
   const analyzeVoiceGender = async (audioFile: File): Promise<string | null> => {
@@ -841,10 +868,13 @@ const App: FC = () => {
 
         setLoadingMessage('Đang phân đoạn âm thanh...');
         const totalDuration = decodedBuffer.duration;
-        const numChunks = Math.ceil(totalDuration / CHUNK_DURATION);
+        const numChunks = Math.max(1, Math.round(totalDuration / CHUNK_DURATION));
+        const actualChunkDuration = totalDuration / numChunks;
+        
         const generatedPrompts: AudioPrompt[] = Array.from({ length: numChunks }, (_, i) => {
-            const startTime = i * CHUNK_DURATION;
-            const endTime = Math.min(startTime + CHUNK_DURATION, totalDuration);
+            const startTime = i * actualChunkDuration;
+            // The last chunk should end exactly at totalDuration to avoid floating point inaccuracies
+            const endTime = (i === numChunks - 1) ? totalDuration : (i + 1) * actualChunkDuration;
             return {
                 id: i,
                 startTime,
@@ -994,6 +1024,10 @@ const App: FC = () => {
     setIsGenerating(true);
     setGenerationError(null);
     setStoryboard(null);
+
+    const averageDuration = prompts.length > 0 
+        ? (prompts[prompts.length - 1].endTime / prompts.length).toFixed(1) 
+        : CHUNK_DURATION;
     
     let attemptedKeys = 0;
     let localApiKeyIndex = currentApiKeyIndex;
@@ -1008,16 +1042,23 @@ const App: FC = () => {
             const videoPromptSchema = {
                 type: Type.OBJECT,
                 properties: {
-                  storyboard: { type: Type.ARRAY, description: `An array of ${prompts.length} video prompts, one for each 8-second audio segment.`, items: { type: Type.OBJECT, properties: { segment: { type: Type.NUMBER, description: "The sequential number of the segment, starting from 1." }, prompt: { type: Type.STRING, description: "A detailed, cinematic video prompt for this segment." } }, required: ["segment", "prompt"] } },
+                  storyboard: { type: Type.ARRAY, description: `An array of ${prompts.length} video prompts, one for each audio segment.`, items: { type: Type.OBJECT, properties: { segment: { type: Type.NUMBER, description: "The sequential number of the segment, starting from 1." }, prompt: { type: Type.STRING, description: "A detailed, cinematic video prompt for this segment." } }, required: ["segment", "prompt"] } },
                   characterDescriptions: { type: Type.STRING, description: "A detailed description of the main characters to ensure consistency. Use newlines to separate characters." },
                   settingDescription: { type: Type.STRING, description: "A detailed description of the main setting/environment to ensure consistency." }
                 },
                 required: ["storyboard", "characterDescriptions", "settingDescription"]
             };
             
-            const promptRequirements: string[] = [
-                "**Detailed Descriptions:** First, provide detailed descriptions for the main characters and the primary setting. For characters, describe each on a new line. This is crucial for maintaining visual consistency across all generated video clips.",
-            ];
+            const promptRequirements: string[] = [];
+
+            if (generationStyle === 'narrative') {
+                promptRequirements.push("**Style:** The audio is a voice-over, discussion, or narration. The generated video prompts should be for illustrative B-roll footage that visualizes the topics being discussed. **DO NOT** show the narrator/speaker. The visuals should complement the audio, like in a documentary.");
+                promptRequirements.push("**Character Descriptions:** If illustrative scenes might contain people, describe them here. Otherwise, describe the overall visual style or recurring motifs. The speaker is NOT a character to be visualized.");
+            } else {
+                promptRequirements.push("**Style:** The script contains dialogue or direct actions from characters. The video prompts should depict these characters speaking and performing the actions described.");
+                promptRequirements.push("**Character Descriptions:** Provide detailed descriptions for the main characters. This is crucial for maintaining visual consistency across all video clips. Describe each character on a new line.");
+            }
+
 
             if (characterNationality && characterNationality !== 'default') {
                 promptRequirements.push(`**Character Nationality:** The characters MUST be described as ${characterNationality}. Ensure their appearance, clothing, and context are consistent with people from that nationality. This is a strict requirement.`);
@@ -1041,13 +1082,13 @@ const App: FC = () => {
                 }
             }
 
-            promptRequirements.push(`**Scene Prompts:** Then, generate a list of exactly ${prompts.length} distinct video prompts, one for each audio segment.`);
+            promptRequirements.push(`**Scene Prompts:** Generate a list of exactly ${prompts.length} distinct video prompts, one for each audio segment.`);
             promptRequirements.push(`**Cinematic Language:** Each prompt must be a richly descriptive paragraph. Include details on camera angles (e.g., "wide shot," "close-up"), character actions, emotions, lighting, and environment. Each prompt should be a single paragraph with no internal line breaks.`);
             promptRequirements.push(`**Consistency:** Ensure the character and setting descriptions are consistently applied across all storyboard prompts.`);
             
             const numberedRequirements = promptRequirements.map((req, index) => `${index + 1}. ${req}`).join('\n\n');
 
-            const userPrompt = `You are a creative director for a short film. The film will be generated using a text-to-video AI model called Veo. The audio for this film has been split into ${prompts.length} segments, each approximately 8 seconds long. Based on the following script/summary, create a coherent video storyboard.
+            const userPrompt = `You are a creative director for a short film. The film will be generated using a text-to-video AI model called Veo. The audio for this film has been split into ${prompts.length} segments, each approximately ${averageDuration} seconds long. Based on the following script/summary, create a coherent video storyboard.
             **Key Requirements:**
             ${numberedRequirements}
             
@@ -1066,7 +1107,7 @@ const App: FC = () => {
             const parsedStoryboard = JSON.parse(response.text) as Storyboard;
             setStoryboard(parsedStoryboard);
 
-            const newEntry: HistoryEntry = { id: `${Date.now()}-${file.name}`, timestamp: Date.now(), fileName: file.name, prompts, scriptText, storyboard: parsedStoryboard, voiceGender, characterNationality };
+            const newEntry: HistoryEntry = { id: `${Date.now()}-${file.name}`, timestamp: Date.now(), fileName: file.name, prompts, scriptText, storyboard: parsedStoryboard, voiceGender, characterNationality, generationStyle };
             saveHistory([newEntry, ...history]);
             
             setCurrentApiKeyIndex(localApiKeyIndex);
@@ -1102,6 +1143,7 @@ const App: FC = () => {
         setStoryboard(entry.storyboard);
         setVoiceGender(entry.voiceGender || null);
         setCharacterNationality(entry.characterNationality || 'default');
+        setGenerationStyle(entry.generationStyle || 'direct');
         setAudioBuffer(null); // IMPORTANT: No audio buffer for history items
         setIsHistoryPanelOpen(false);
     }
@@ -1158,6 +1200,8 @@ const App: FC = () => {
                 onPromptTextChange={handlePromptTextChange}
                 characterNationality={characterNationality}
                 onCharacterNationalityChange={setCharacterNationality}
+                generationStyle={generationStyle}
+                onGenerationStyleChange={setGenerationStyle}
             />
         </div>
       );

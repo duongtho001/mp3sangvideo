@@ -1,4 +1,3 @@
-
 export interface AudioPrompt {
   id: number;
   startTime: number;
@@ -26,4 +25,5 @@ export interface HistoryEntry {
   storyboard: Storyboard;
   voiceGender?: string | null;
   characterNationality?: string;
+  generationStyle?: 'direct' | 'narrative';
 }

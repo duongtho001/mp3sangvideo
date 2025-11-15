@@ -1,5 +1,5 @@
 {
-  "name": "Copy of Phân Tích Âm Thanh & Tạo Kịch Bản Video",
+  "name": "MP3 To Video",
   "description": "Một ứng dụng web tương tác để tải lên tệp âm thanh (ví dụ: MP3, WAV), phân tích nó thành các đoạn 8 giây có thể phát và tạo kịch bản phân cảnh (storyboard) cho video.",
   "requestFramePermissions": []
 }
