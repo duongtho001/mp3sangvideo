@@ -406,6 +406,8 @@ interface StoryboardPanelProps {
   onCharacterNationalityChange: (value: string) => void;
   generationStyle: 'direct' | 'narrative';
   onGenerationStyleChange: (value: 'direct' | 'narrative') => void;
+  characterCount: string;
+  onCharacterCountChange: (value: string) => void;
 }
 
 const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
@@ -413,7 +415,7 @@ const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
     isPlaybackEnabled, onTranscribeAudio, isTranscribing, transcriptionError, scriptText, 
     onScriptTextChange, onTxtFileUpload, onGenerateStoryboard, isGenerating, generationError, 
     storyboard, onPromptTextChange, fileName, characterNationality, onCharacterNationalityChange,
-    generationStyle, onGenerationStyleChange
+    generationStyle, onGenerationStyleChange, characterCount, onCharacterCountChange
   } = props;
   
   const txtInputRef = useRef<HTMLInputElement>(null);
@@ -504,10 +506,10 @@ const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
                       className="w-full mt-4 h-40 p-4 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-colors"
                       disabled={isGenerating}
                   />
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label htmlFor="nationality-select" className="block text-sm font-medium text-gray-400 mb-2">
-                                Quốc tịch Nhân vật (Tùy chọn)
+                                Quốc tịch Nhân vật
                             </label>
                             <select
                                 id="nationality-select"
@@ -542,6 +544,23 @@ const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
                             >
                                 <option value="direct">Hành động Trực tiếp</option>
                                 <option value="narrative">Thuyết minh/Minh họa</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="char-count-select" className="block text-sm font-medium text-gray-400 mb-2">
+                                Số lượng Nhân vật
+                            </label>
+                            <select
+                                id="char-count-select"
+                                value={characterCount}
+                                onChange={(e) => onCharacterCountChange(e.target.value)}
+                                disabled={isGenerating}
+                                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-colors"
+                            >
+                                <option value="auto">Tự động (Mặc định)</option>
+                                <option value="1">1 nhân vật</option>
+                                <option value="2">2 nhân vật</option>
+                                <option value="3">3 nhân vật</option>
                             </select>
                         </div>
                     </div>
@@ -709,6 +728,7 @@ const App: FC = () => {
   const [voiceGender, setVoiceGender] = useState<string | null>(null);
   const [characterNationality, setCharacterNationality] = useState<string>('default');
   const [generationStyle, setGenerationStyle] = useState<'direct' | 'narrative'>('direct');
+  const [characterCount, setCharacterCount] = useState<string>('auto');
   
   // History State
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -786,6 +806,7 @@ const App: FC = () => {
     setVoiceGender(null);
     setCharacterNationality('default');
     setGenerationStyle('direct');
+    setCharacterCount('auto');
   }, []);
 
   const analyzeVoiceGender = async (audioFile: File): Promise<string | null> => {
@@ -1059,6 +1080,9 @@ const App: FC = () => {
                 promptRequirements.push("**Character Descriptions:** Provide detailed descriptions for the main characters. This is crucial for maintaining visual consistency across all video clips. Describe each character on a new line.");
             }
 
+            if (characterCount !== 'auto') {
+                promptRequirements.push(`**Number of Characters:** The story MUST revolve around exactly ${characterCount} main character(s). All character descriptions and scene prompts must strictly adhere to this number to maintain consistency. Do not introduce more characters than specified.`);
+            }
 
             if (characterNationality && characterNationality !== 'default') {
                 promptRequirements.push(`**Character Nationality:** The characters MUST be described as ${characterNationality}. Ensure their appearance, clothing, and context are consistent with people from that nationality. This is a strict requirement.`);
@@ -1107,7 +1131,7 @@ const App: FC = () => {
             const parsedStoryboard = JSON.parse(response.text) as Storyboard;
             setStoryboard(parsedStoryboard);
 
-            const newEntry: HistoryEntry = { id: `${Date.now()}-${file.name}`, timestamp: Date.now(), fileName: file.name, prompts, scriptText, storyboard: parsedStoryboard, voiceGender, characterNationality, generationStyle };
+            const newEntry: HistoryEntry = { id: `${Date.now()}-${file.name}`, timestamp: Date.now(), fileName: file.name, prompts, scriptText, storyboard: parsedStoryboard, voiceGender, characterNationality, generationStyle, characterCount };
             saveHistory([newEntry, ...history]);
             
             setCurrentApiKeyIndex(localApiKeyIndex);
@@ -1144,6 +1168,7 @@ const App: FC = () => {
         setVoiceGender(entry.voiceGender || null);
         setCharacterNationality(entry.characterNationality || 'default');
         setGenerationStyle(entry.generationStyle || 'direct');
+        setCharacterCount(entry.characterCount || 'auto');
         setAudioBuffer(null); // IMPORTANT: No audio buffer for history items
         setIsHistoryPanelOpen(false);
     }
@@ -1202,6 +1227,8 @@ const App: FC = () => {
                 onCharacterNationalityChange={setCharacterNationality}
                 generationStyle={generationStyle}
                 onGenerationStyleChange={setGenerationStyle}
+                characterCount={characterCount}
+                onCharacterCountChange={setCharacterCount}
             />
         </div>
       );

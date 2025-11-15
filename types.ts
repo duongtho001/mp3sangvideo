@@ -26,4 +26,5 @@ export interface HistoryEntry {
   voiceGender?: string | null;
   characterNationality?: string;
   generationStyle?: 'direct' | 'narrative';
+  characterCount?: string;
 }
