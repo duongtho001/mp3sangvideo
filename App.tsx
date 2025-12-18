@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback, FC, useEffect } from 'react';
 import { AudioPrompt, Storyboard, StoryboardPrompt, HistoryEntry } from './types';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -73,6 +74,12 @@ const TrashIcon: FC<{ className?: string }> = ({ className }) => (
 const KeyIcon: FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4v-1a1 1 0 011-1h2-2-2a1 1 0 01-1-1v-2h2v-2h2v-2h2l1.743-1.743A6 6 0 0121 9z" />
+    </svg>
+);
+
+const BrainIcon: FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
     </svg>
 );
 
@@ -364,9 +371,9 @@ const AnalysisPanel: FC<AnalysisPanelProps> = ({ prompts, playingPromptId, onPla
 
     return (
         <div className="w-full space-y-6">
-           <div className="text-center p-4 bg-gray-800 rounded-lg sticky top-0 z-10">
+           <div className="text-center p-4 bg-gray-800 rounded-lg sticky top-0 z-10 border border-gray-700">
              <h2 className="text-xl font-bold">Phân tích tệp <span className="text-cyan-400">{fileName}</span></h2>
-             <p className="text-gray-400">Tìm thấy {prompts.length} phân đoạn</p>
+             <p className="text-gray-400">Tìm thấy {prompts.length} phân đoạn (mỗi đoạn ~8s)</p>
              {formattedGender && (
                 <p className="text-sm text-gray-400 mt-1">Giọng nói được phát hiện: <span className="font-semibold text-cyan-400">{formattedGender}</span></p>
              )}
@@ -450,7 +457,7 @@ const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
                         <button
                             onClick={onTranscribeAudio}
                             disabled={!isPlaybackEnabled}
-                            className="w-full mt-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-500 rounded-md text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                            className="w-full mt-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-500 rounded-md text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg shadow-cyan-900/20"
                         >
                             <TranscribeIcon className="w-6 h-6" />
                             Phiên âm từ Âm thanh (Khuyến nghị)
@@ -500,7 +507,7 @@ const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
               )}
 
               {scriptText && !isTranscribing && (
-                <div className="p-6 bg-gray-800 rounded-lg">
+                <div className="p-6 bg-gray-800 rounded-lg border border-gray-700">
                   <h4 className="text-lg font-semibold text-center text-gray-300">Xem lại & Chỉnh sửa Kịch bản</h4>
                   <textarea
                       value={scriptText}
@@ -509,7 +516,7 @@ const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
                       className="w-full mt-4 h-40 p-4 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-colors"
                       disabled={isGenerating}
                   />
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
                         <div>
                             <label htmlFor="nationality-select" className="block text-sm font-medium text-gray-400 mb-2">
                                 Quốc tịch Nhân vật
@@ -596,7 +603,7 @@ const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
                   <button
                       onClick={onGenerateStoryboard}
                       disabled={isGenerating || !scriptText.trim()}
-                      className="w-full mt-4 px-6 py-3 bg-cyan-600 hover:bg-cyan-500 rounded-md text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      className="w-full mt-4 px-6 py-3 bg-cyan-600 hover:bg-cyan-500 rounded-md text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-cyan-900/20"
                   >
                       {isGenerating ? 'Đang tạo...' : 'Tạo Storyboard từ Kịch bản'}
                   </button>
@@ -735,6 +742,13 @@ const fileToBase64 = (file: File): Promise<string> => {
     });
 };
 
+const MODELS = [
+    { name: 'Gemini 3 Flash Preview', value: 'gemini-3-flash-preview', isDefault: true },
+    { name: 'Gemini 3 Pro Preview', value: 'gemini-3-pro-preview' },
+    { name: 'Gemini 2.5 Pro', value: 'gemini-2.5-pro-preview-09-2024' },
+    { name: 'Gemini 2.5 Flash', value: 'gemini-2.5-flash-preview-09-2025' }
+];
+
 const App: FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [prompts, setPrompts] = useState<AudioPrompt[]>([]);
@@ -754,6 +768,7 @@ const App: FC = () => {
   const [generationStyle, setGenerationStyle] = useState<'direct' | 'narrative'>('direct');
   const [characterCount, setCharacterCount] = useState<string>('auto');
   const [visualStyle, setVisualStyle] = useState<string>('cinematic');
+  const [selectedModel, setSelectedModel] = useState<string>(MODELS[0].value);
   
   // History State
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -777,6 +792,8 @@ const App: FC = () => {
         }
         const storedKeys = localStorage.getItem('geminiApiKeys');
         const storedIndex = localStorage.getItem('geminiApiKeyIndex');
+        const storedModel = localStorage.getItem('selectedGeminiModel');
+
         if (storedKeys) {
             const parsedKeys = JSON.parse(storedKeys);
             if (Array.isArray(parsedKeys) && parsedKeys.length > 0) {
@@ -785,6 +802,9 @@ const App: FC = () => {
         }
         if (storedIndex) {
             setCurrentApiKeyIndex(JSON.parse(storedIndex));
+        }
+        if (storedModel) {
+            setSelectedModel(storedModel);
         }
     } catch (e) {
         console.error("Không thể tải dữ liệu từ localStorage", e);
@@ -807,6 +827,11 @@ const App: FC = () => {
     localStorage.setItem('geminiApiKeys', JSON.stringify(cleanedKeys));
     localStorage.setItem('geminiApiKeyIndex', '0');
     setIsApiKeyModalOpen(false);
+  };
+
+  const handleModelChange = (modelValue: string) => {
+    setSelectedModel(modelValue);
+    localStorage.setItem('selectedGeminiModel', modelValue);
   };
 
 
@@ -835,9 +860,12 @@ const App: FC = () => {
     setVisualStyle('cinematic');
   }, []);
 
+  const getAiInstance = (key: string) => {
+    return new GoogleGenAI({ apiKey: key });
+  };
+
   const analyzeVoiceGender = async (audioFile: File): Promise<string | null> => {
     if (apiKeys.length === 0) {
-        // Don't open modal here, let the main process handle it.
         console.warn("No API keys for voice analysis.");
         return null;
     }
@@ -850,18 +878,19 @@ const App: FC = () => {
         attemptedKeys++;
 
         try {
-            const ai = new GoogleGenAI({ apiKey: keyToTry });
+            const ai = getAiInstance(keyToTry);
             const base64Data = await fileToBase64(audioFile);
 
             const audioPart = { inlineData: { mimeType: audioFile.type, data: base64Data } };
             const textPart = { text: "Analyze the voice(s) in this audio file. Identify the gender of the primary speaker or speakers. Respond with only one word from the following options: 'Male', 'Female', 'Mixed', 'Unknown'." };
             
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-pro',
+                model: selectedModel,
                 contents: { parts: [audioPart, textPart] },
+                config: selectedModel.includes('pro') ? { thinkingConfig: { thinkingBudget: 4096 } } : undefined
             });
             
-            const result = response.text.trim();
+            const result = response.text?.trim() || 'Unknown';
             const validResults = ['Male', 'Female', 'Mixed', 'Unknown'];
             const gender = validResults.find(r => result.toLowerCase().includes(r.toLowerCase())) || 'Unknown';
             
@@ -877,14 +906,12 @@ const App: FC = () => {
             if (isQuotaError) {
                 localApiKeyIndex = (localApiKeyIndex + 1) % apiKeys.length;
             } else {
-                console.error("An unexpected error occurred during voice analysis.");
                 setVoiceGender('Unknown');
                 return 'Unknown';
             }
         }
     }
     
-    console.error("All API keys failed for voice analysis.");
     setVoiceGender('Unknown');
     return 'Unknown';
 };
@@ -909,14 +936,13 @@ const App: FC = () => {
         const decodedBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
         setAudioBuffer(decodedBuffer);
 
-        setLoadingMessage('Đang phân đoạn âm thanh...');
+        setLoadingMessage('Đang phân đoạn âm thanh thành các đoạn 8 giây...');
         const totalDuration = decodedBuffer.duration;
         const numChunks = Math.max(1, Math.round(totalDuration / CHUNK_DURATION));
         const actualChunkDuration = totalDuration / numChunks;
         
         const generatedPrompts: AudioPrompt[] = Array.from({ length: numChunks }, (_, i) => {
             const startTime = i * actualChunkDuration;
-            // The last chunk should end exactly at totalDuration to avoid floating point inaccuracies
             const endTime = (i === numChunks - 1) ? totalDuration : (i + 1) * actualChunkDuration;
             return {
                 id: i,
@@ -927,7 +953,7 @@ const App: FC = () => {
         });
         setPrompts(generatedPrompts);
         
-        setLoadingMessage('Đang phân tích giọng nói...');
+        setLoadingMessage(`Đang phân tích giọng nói với ${MODELS.find(m => m.value === selectedModel)?.name}...`);
         await analyzeVoiceGender(selectedFile);
 
     } catch (err) {
@@ -937,7 +963,7 @@ const App: FC = () => {
         setIsLoading(false);
         setLoadingMessage('');
     }
-  }, [resetState, apiKeys, currentApiKeyIndex]);
+  }, [resetState, apiKeys, currentApiKeyIndex, selectedModel]);
 
   const handlePlayPrompt = useCallback((prompt: AudioPrompt) => {
     if (!audioBuffer || !audioContextRef.current) return;
@@ -1006,25 +1032,26 @@ const App: FC = () => {
         attemptedKeys++;
         
         try {
-            const ai = new GoogleGenAI({ apiKey: keyToTry });
+            const ai = getAiInstance(keyToTry);
             const base64Data = await fileToBase64(file);
 
             const audioPart = { inlineData: { mimeType: file.type, data: base64Data } };
             const textPart = { text: "Phiên âm tệp âm thanh này một cách chính xác. Chỉ cung cấp văn bản thô của lời nói, không có bất kỳ bình luận bổ sung nào, nhãn như 'NGƯỜI NÓI 1', hoặc các cụm từ giới thiệu như 'Đây là bản phiên âm:'." };
 
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-pro',
+                model: selectedModel,
                 contents: { parts: [audioPart, textPart] },
+                config: selectedModel.includes('pro') ? { thinkingConfig: { thinkingBudget: 8192 } } : undefined
             });
             
-            setScriptText(response.text);
+            setScriptText(response.text || '');
             setCurrentApiKeyIndex(localApiKeyIndex);
             localStorage.setItem('geminiApiKeyIndex', JSON.stringify(localApiKeyIndex));
             setIsTranscribing(false);
             return;
 
         } catch (err) {
-            console.error(`API Key ${localApiKeyIndex + 1} failed:`, err);
+            console.error(`API Key ${localApiKeyIndex + 1} failed during transcription:`, err);
             const isQuotaError = err instanceof Error && (err.message.includes('429') || err.message.toLowerCase().includes('quota') || err.message.toLowerCase().includes('resource has been exhausted'));
             
             if (isQuotaError) {
@@ -1080,12 +1107,12 @@ const App: FC = () => {
         attemptedKeys++;
 
         try {
-            const ai = new GoogleGenAI({ apiKey: keyToTry });
+            const ai = getAiInstance(keyToTry);
 
             const videoPromptSchema = {
                 type: Type.OBJECT,
                 properties: {
-                  storyboard: { type: Type.ARRAY, description: `An array of ${prompts.length} video prompts, one for each audio segment.`, items: { type: Type.OBJECT, properties: { segment: { type: Type.NUMBER, description: "The sequential number of the segment, starting from 1." }, prompt: { type: Type.STRING, description: "A detailed, cinematic video prompt for this segment." } }, required: ["segment", "prompt"] } },
+                  storyboard: { type: Type.ARRAY, description: `An array of exactly ${prompts.length} video prompts, one for each audio segment of ~8s.`, items: { type: Type.OBJECT, properties: { segment: { type: Type.NUMBER, description: "The sequential number of the segment, starting from 1." }, prompt: { type: Type.STRING, description: "A detailed, cinematic video prompt for this segment." } }, required: ["segment", "prompt"] } },
                   characterDescriptions: { type: Type.STRING, description: "A detailed description of the main characters to ensure consistency. Use newlines to separate characters." },
                   settingDescription: { type: Type.STRING, description: "A detailed description of the main setting/environment to ensure consistency." }
                 },
@@ -1095,66 +1122,59 @@ const App: FC = () => {
             const promptRequirements: string[] = [];
 
             if (visualStyle && visualStyle !== 'default') {
-                promptRequirements.push(`**Visual Style:** This is a crucial instruction. Every single scene prompt generated MUST strictly adhere to a **${visualStyle}** aesthetic. Describe camera work, color palettes, lighting, and overall mood to match this style consistently.`);
+                promptRequirements.push(`**Visual Style:** Crucial. Every prompt generated MUST strictly adhere to a **${visualStyle}** aesthetic.`);
             }
 
             if (generationStyle === 'narrative') {
-                promptRequirements.push("**Style:** The audio is a voice-over, discussion, or narration. The generated video prompts should be for illustrative B-roll footage that visualizes the topics being discussed. **DO NOT** show the narrator/speaker. The visuals should complement the audio, like in a documentary.");
-                promptRequirements.push("**Character Descriptions:** If illustrative scenes might contain people, describe them here. Otherwise, describe the overall visual style or recurring motifs. The speaker is NOT a character to be visualized.");
+                promptRequirements.push("**Style:** Audio is voice-over. Generate illustrative B-roll footage. **DO NOT** show the speaker.");
             } else {
-                promptRequirements.push("**Style:** The script contains dialogue or direct actions from characters. The video prompts should depict these characters speaking and performing the actions described.");
-                promptRequirements.push("**Character Descriptions:** Provide detailed descriptions for the main characters. This is crucial for maintaining visual consistency across all video clips. Describe each character on a new line.");
+                promptRequirements.push("**Style:** Script contains dialogue/direct actions. Depict characters speaking and performing actions.");
             }
 
             if (characterCount !== 'auto') {
-                promptRequirements.push(`**Number of Characters:** The story MUST revolve around exactly ${characterCount} main character(s). All character descriptions and scene prompts must strictly adhere to this number to maintain consistency. Do not introduce more characters than specified.`);
+                promptRequirements.push(`**Number of Characters:** Exactly ${characterCount} main character(s).`);
             }
 
             if (characterNationality && characterNationality !== 'default') {
-                promptRequirements.push(`**Character Nationality:** The characters MUST be described as ${characterNationality}. Ensure their appearance, clothing, and context are consistent with people from that nationality. This is a strict requirement.`);
+                promptRequirements.push(`**Character Nationality:** Characters MUST be described as ${characterNationality}.`);
             }
 
             if (voiceGender && voiceGender.toLowerCase() !== 'unknown') {
-                let description = '';
-                switch (voiceGender.toLowerCase()) {
-                    case 'male':
-                        description = 'The primary speaker is male. Reflect this in the character descriptions (e.g., "a male news anchor," "a man in his 40s").';
-                        break;
-                    case 'female':
-                        description = 'The primary speaker is female. Reflect this in the character descriptions (e.g., "a female reporter," "a woman in her 30s").';
-                        break;
-                    case 'mixed':
-                        description = 'There are multiple speakers of different genders. Create distinct character descriptions, noting their likely gender based on the dialogue.';
-                        break;
-                }
-                if(description) {
-                    promptRequirements.push(`**Voice Profile:** ${description}`);
-                }
+                promptRequirements.push(`**Voice Profile:** Primary speaker is ${voiceGender}. Reflect this gender in character descriptions.`);
             }
 
-            promptRequirements.push(`**Scene Prompts:** Generate a list of exactly ${prompts.length} distinct video prompts, one for each audio segment.`);
-            promptRequirements.push(`**Cinematic Language:** Each prompt must be a richly descriptive paragraph. Include details on camera angles (e.g., "wide shot," "close-up"), character actions, emotions, lighting, and environment. Each prompt should be a single paragraph with no internal line breaks.`);
-            promptRequirements.push(`**Consistency:** Ensure the character and setting descriptions are consistently applied across all storyboard prompts.`);
+            promptRequirements.push(`**Scene Prompts:** Generate EXACTLY ${prompts.length} distinct video prompts (one per segment).`);
             
             const numberedRequirements = promptRequirements.map((req, index) => `${index + 1}. ${req}`).join('\n\n');
 
-            const userPrompt = `You are a creative director for a short film. The film will be generated using a text-to-video AI model called Veo. The audio for this film has been split into ${prompts.length} segments, each approximately ${averageDuration} seconds long. Based on the following script/summary, create a coherent video storyboard.
-            **Key Requirements:**
+            const userPrompt = `Create a cinematic storyboard for a short film based on the following script. The film is split into ${prompts.length} segments, each roughly 8 seconds long.
+            **Requirements:**
             ${numberedRequirements}
             
-            **User-Provided Audio Script/Summary:**
+            **Script/Audio Summary:**
             ---
             ${scriptText}
-            ---
-            Please provide your response in the requested JSON format.`;
+            ---`;
+
+            const config: any = { 
+                responseMimeType: "application/json", 
+                responseSchema: videoPromptSchema 
+            };
+            
+            // Add thinking budget for Pro models for better reasoning
+            if (selectedModel.includes('pro')) {
+                config.thinkingConfig = { thinkingBudget: 16384 };
+            }
 
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-pro',
+                model: selectedModel,
                 contents: userPrompt,
-                config: { responseMimeType: "application/json", responseSchema: videoPromptSchema },
+                config,
             });
             
-            const parsedStoryboard = JSON.parse(response.text) as Storyboard;
+            const parsedStoryboard = JSON.parse(response.text || '{}') as Storyboard;
+            if (!parsedStoryboard.storyboard) throw new Error("Mô hình không trả về dữ liệu kịch bản hợp lệ.");
+
             setStoryboard(parsedStoryboard);
 
             const newEntry: HistoryEntry = { id: `${Date.now()}-${file.name}`, timestamp: Date.now(), fileName: file.name, prompts, scriptText, storyboard: parsedStoryboard, voiceGender, characterNationality, generationStyle, characterCount, visualStyle };
@@ -1166,7 +1186,7 @@ const App: FC = () => {
             return;
 
         } catch(err) {
-            console.error(`API Key ${localApiKeyIndex + 1} failed:`, err);
+            console.error(`API Key ${localApiKeyIndex + 1} failed during generation:`, err);
             const isQuotaError = err instanceof Error && (err.message.includes('429') || err.message.toLowerCase().includes('quota') || err.message.toLowerCase().includes('resource has been exhausted'));
 
             if (isQuotaError) {
@@ -1187,7 +1207,7 @@ const App: FC = () => {
     const entry = history.find(item => item.id === id);
     if (entry) {
         resetState();
-        setFile({ name: entry.fileName, type: 'audio/mpeg' } as File); // Mock file for name display
+        setFile({ name: entry.fileName, type: 'audio/mpeg' } as File); 
         setPrompts(entry.prompts);
         setScriptText(entry.scriptText);
         setStoryboard(entry.storyboard);
@@ -1196,7 +1216,7 @@ const App: FC = () => {
         setGenerationStyle(entry.generationStyle || 'direct');
         setCharacterCount(entry.characterCount || 'auto');
         setVisualStyle(entry.visualStyle || 'cinematic');
-        setAudioBuffer(null); // IMPORTANT: No audio buffer for history items
+        setAudioBuffer(null); 
         setIsHistoryPanelOpen(false);
     }
   };
@@ -1216,10 +1236,10 @@ const App: FC = () => {
     }
     if (error) {
       return (
-        <div className="text-center p-8 bg-red-900/50 border border-red-500 rounded-lg">
+        <div className="text-center p-8 bg-red-900/50 border border-red-500 rounded-lg max-w-lg mx-auto">
           <p className="text-xl font-semibold text-red-300">Đã xảy ra lỗi</p>
           <p className="text-red-400 mt-2">{error}</p>
-          <button onClick={resetState} className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-500 rounded-md">
+          <button onClick={resetState} className="mt-4 px-6 py-2 bg-red-600 hover:bg-red-500 rounded-md transition-colors">
             Thử lại
           </button>
         </div>
@@ -1227,7 +1247,7 @@ const App: FC = () => {
     }
     if (prompts.length > 0 && file) {
       return (
-        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-start px-4">
             <AnalysisPanel 
                 prompts={prompts}
                 playingPromptId={playingPromptId}
@@ -1266,7 +1286,7 @@ const App: FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-4 sm:p-6 lg:p-8 relative">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-4 sm:p-6 lg:p-8 relative selection:bg-cyan-500/30">
        <HistoryPanel 
             isOpen={isHistoryPanelOpen}
             onClose={() => setIsHistoryPanelOpen(false)}
@@ -1281,45 +1301,67 @@ const App: FC = () => {
             onSave={handleSaveApiKeys}
             currentKeys={apiKeys}
         />
-      <header className="w-full max-w-6xl mx-auto flex justify-between items-center mb-10">
-         <button 
-            onClick={resetState}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-white font-semibold transition-colors text-sm"
-        >
-            <PlusIcon className="w-5 h-5"/>
-            Phiên Mới
-        </button>
-        <div className="text-center">
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
-            Âm thanh sang <span className="text-cyan-400">Storyboard</span>
+      <header className="w-full max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+         <div className="flex items-center gap-3 w-full md:w-auto">
+            <button 
+                onClick={resetState}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-md text-white font-semibold transition-colors text-sm border border-gray-700 shadow-sm"
+            >
+                <PlusIcon className="w-5 h-5 text-cyan-500"/>
+                Phiên Mới
+            </button>
+            <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-cyan-500">
+                    <BrainIcon className="w-5 h-5" />
+                </div>
+                <select 
+                    value={selectedModel}
+                    onChange={(e) => handleModelChange(e.target.value)}
+                    className="pl-10 pr-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-md text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all appearance-none cursor-pointer"
+                >
+                    {MODELS.map(m => (
+                        <option key={m.value} value={m.value}>{m.name}{m.isDefault ? ' (Mặc định)' : ''}</option>
+                    ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-gray-500">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+            </div>
+        </div>
+        
+        <div className="text-center order-first md:order-none">
+            <h1 className="text-4xl sm:text-5xl font-black tracking-tight bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent">
+            Audio to <span className="text-cyan-500">Storyboard</span>
             </h1>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 w-full md:w-auto justify-end">
             <button 
                 onClick={() => setIsApiKeyModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-white font-semibold transition-colors text-sm"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-md text-white font-semibold transition-colors text-sm border border-gray-700 shadow-sm"
                 aria-label="Cài đặt API Key"
             >
-                <KeyIcon className="w-5 h-5"/>
+                <KeyIcon className="w-5 h-5 text-cyan-500"/>
                 <span className="hidden sm:inline">API Key</span>
             </button>
             <button 
                 onClick={() => setIsHistoryPanelOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-white font-semibold transition-colors text-sm"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-md text-white font-semibold transition-colors text-sm border border-gray-700 shadow-sm"
             >
-                <HistoryIcon className="w-5 h-5"/>
+                <HistoryIcon className="w-5 h-5 text-cyan-500"/>
                 <span className="hidden sm:inline">Lịch sử</span>
             </button>
         </div>
       </header>
-       <p className="text-lg text-gray-400 max-w-2xl mx-auto text-center -mt-4 mb-10">
-          Tải lên âm thanh, cung cấp kịch bản, sau đó tạo một kịch bản phân cảnh video có thể chỉnh sửa cho Veo.
+       <p className="text-lg text-gray-400 max-w-2xl mx-auto text-center -mt-6 mb-10 px-4">
+          Tải lên MP3, phân tích thành các đoạn 8 giây và tạo kịch bản phân cảnh chi tiết sử dụng sức mạnh của các mô hình Gemini 3 và 2.5.
         </p>
       <main className="w-full flex items-center justify-center flex-grow">
         {renderContent()}
       </main>
-      <footer className="text-center text-gray-500 mt-12 text-sm">
-        <p>Xây dựng với React, TypeScript, và Tailwind CSS. Hỗ trợ bởi Web Audio API và Gemini.</p>
+      <footer className="text-center text-gray-600 mt-12 text-xs py-8 border-t border-gray-800/50 w-full max-w-4xl">
+        <p>Phát triển bởi Đội ngũ Kỹ thuật Cao cấp. Tận dụng Gemini Native Audio & Reasoning.</p>
+        <p className="mt-2">Đoạn 8s được tính toán dựa trên tổng thời lượng để đảm bảo khớp với yêu cầu Video AI.</p>
       </footer>
     </div>
   );
