@@ -177,7 +177,7 @@ const FileUpload: FC<FileUploadProps> = ({ onFileUpload, isLoading }) => {
       >
         Chọn Tệp
       </button>
-      <p className="text-xs text-gray-500 pt-2">Định dạng hỗ trợ: MP3, WAV, OGG, FLAC. Tối đa 50MB.</p>
+      <p className="text-xs text-gray-500 pt-2">Định dạng hỗ trợ: MP3, WAV, OGG, FLAC.</p>
     </div>
   );
 };
@@ -408,6 +408,8 @@ interface StoryboardPanelProps {
   onGenerationStyleChange: (value: 'direct' | 'narrative') => void;
   characterCount: string;
   onCharacterCountChange: (value: string) => void;
+  visualStyle: string;
+  onVisualStyleChange: (value: string) => void;
 }
 
 const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
@@ -415,7 +417,8 @@ const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
     isPlaybackEnabled, onTranscribeAudio, isTranscribing, transcriptionError, scriptText, 
     onScriptTextChange, onTxtFileUpload, onGenerateStoryboard, isGenerating, generationError, 
     storyboard, onPromptTextChange, fileName, characterNationality, onCharacterNationalityChange,
-    generationStyle, onGenerationStyleChange, characterCount, onCharacterCountChange
+    generationStyle, onGenerationStyleChange, characterCount, onCharacterCountChange,
+    visualStyle, onVisualStyleChange
   } = props;
   
   const txtInputRef = useRef<HTMLInputElement>(null);
@@ -506,7 +509,7 @@ const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
                       className="w-full mt-4 h-40 p-4 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-colors"
                       disabled={isGenerating}
                   />
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label htmlFor="nationality-select" className="block text-sm font-medium text-gray-400 mb-2">
                                 Quốc tịch Nhân vật
@@ -563,8 +566,29 @@ const StoryboardPanel: FC<StoryboardPanelProps> = (props) => {
                                 <option value="3">3 nhân vật</option>
                             </select>
                         </div>
+                         <div>
+                            <label htmlFor="visual-style-select" className="block text-sm font-medium text-gray-400 mb-2">
+                                Phong cách Hình ảnh
+                            </label>
+                            <select
+                                id="visual-style-select"
+                                value={visualStyle}
+                                onChange={(e) => onVisualStyleChange(e.target.value)}
+                                disabled={isGenerating}
+                                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-colors"
+                            >
+                                <option value="cinematic">Điện ảnh (Mặc định)</option>
+                                <option value="photorealistic">Chân thực</option>
+                                <option value="anime">Hoạt hình / Anime</option>
+                                <option value="vintage">Phim Cổ điển</option>
+                                <option value="cyberpunk">Cyberpunk</option>
+                                <option value="documentary">Tài liệu</option>
+                                <option value="vlog">Vlog</option>
+                                <option value="default">Không có</option>
+                            </select>
+                        </div>
                     </div>
-                     <div className="mt-2 text-center text-xs text-gray-500 px-2 py-2 bg-gray-900/50 rounded-md">
+                     <div className="mt-4 text-center text-xs text-gray-500 px-2 py-2 bg-gray-900/50 rounded-md">
                         {generationStyle === 'direct'
                             ? 'Tạo cảnh nhân vật thực hiện hành động hoặc nói lời thoại trong kịch bản.'
                             : 'Tạo cảnh quay minh họa (B-roll) cho nội dung được nói, không hiển thị người nói.'}
@@ -729,6 +753,7 @@ const App: FC = () => {
   const [characterNationality, setCharacterNationality] = useState<string>('default');
   const [generationStyle, setGenerationStyle] = useState<'direct' | 'narrative'>('direct');
   const [characterCount, setCharacterCount] = useState<string>('auto');
+  const [visualStyle, setVisualStyle] = useState<string>('cinematic');
   
   // History State
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -807,6 +832,7 @@ const App: FC = () => {
     setCharacterNationality('default');
     setGenerationStyle('direct');
     setCharacterCount('auto');
+    setVisualStyle('cinematic');
   }, []);
 
   const analyzeVoiceGender = async (audioFile: File): Promise<string | null> => {
@@ -867,10 +893,6 @@ const App: FC = () => {
   const handleFileUpload = useCallback(async (selectedFile: File) => {
     if (!selectedFile.type.startsWith('audio/')) {
       setError('Loại tệp không hợp lệ. Vui lòng tải lên tệp âm thanh được hỗ trợ.');
-      return;
-    }
-     if (selectedFile.size > 50 * 1024 * 1024) { // 50MB limit
-      setError('Kích thước tệp vượt quá 50MB. Vui lòng tải lên một tệp nhỏ hơn.');
       return;
     }
     resetState();
@@ -1072,6 +1094,10 @@ const App: FC = () => {
             
             const promptRequirements: string[] = [];
 
+            if (visualStyle && visualStyle !== 'default') {
+                promptRequirements.push(`**Visual Style:** This is a crucial instruction. Every single scene prompt generated MUST strictly adhere to a **${visualStyle}** aesthetic. Describe camera work, color palettes, lighting, and overall mood to match this style consistently.`);
+            }
+
             if (generationStyle === 'narrative') {
                 promptRequirements.push("**Style:** The audio is a voice-over, discussion, or narration. The generated video prompts should be for illustrative B-roll footage that visualizes the topics being discussed. **DO NOT** show the narrator/speaker. The visuals should complement the audio, like in a documentary.");
                 promptRequirements.push("**Character Descriptions:** If illustrative scenes might contain people, describe them here. Otherwise, describe the overall visual style or recurring motifs. The speaker is NOT a character to be visualized.");
@@ -1131,7 +1157,7 @@ const App: FC = () => {
             const parsedStoryboard = JSON.parse(response.text) as Storyboard;
             setStoryboard(parsedStoryboard);
 
-            const newEntry: HistoryEntry = { id: `${Date.now()}-${file.name}`, timestamp: Date.now(), fileName: file.name, prompts, scriptText, storyboard: parsedStoryboard, voiceGender, characterNationality, generationStyle, characterCount };
+            const newEntry: HistoryEntry = { id: `${Date.now()}-${file.name}`, timestamp: Date.now(), fileName: file.name, prompts, scriptText, storyboard: parsedStoryboard, voiceGender, characterNationality, generationStyle, characterCount, visualStyle };
             saveHistory([newEntry, ...history]);
             
             setCurrentApiKeyIndex(localApiKeyIndex);
@@ -1169,6 +1195,7 @@ const App: FC = () => {
         setCharacterNationality(entry.characterNationality || 'default');
         setGenerationStyle(entry.generationStyle || 'direct');
         setCharacterCount(entry.characterCount || 'auto');
+        setVisualStyle(entry.visualStyle || 'cinematic');
         setAudioBuffer(null); // IMPORTANT: No audio buffer for history items
         setIsHistoryPanelOpen(false);
     }
@@ -1229,6 +1256,8 @@ const App: FC = () => {
                 onGenerationStyleChange={setGenerationStyle}
                 characterCount={characterCount}
                 onCharacterCountChange={setCharacterCount}
+                visualStyle={visualStyle}
+                onVisualStyleChange={setVisualStyle}
             />
         </div>
       );

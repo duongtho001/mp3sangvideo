@@ -27,4 +27,5 @@ export interface HistoryEntry {
   characterNationality?: string;
   generationStyle?: 'direct' | 'narrative';
   characterCount?: string;
+  visualStyle?: string;
 }
